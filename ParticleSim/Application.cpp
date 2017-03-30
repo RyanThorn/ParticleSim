@@ -54,6 +54,10 @@ bool Application::Init()
 	rapidjson::IStreamWrapper m_settingsWrapped(m_settingsFile);
 	m_settings.ParseStream(m_settingsWrapped);
 
+	std::default_random_engine m_rng;
+	std::uniform_int_distribution<int> m_rngv(-50, 50);
+	std::uniform_int_distribution<int> m_rngpw((m_settings["WindowWidth"].GetInt() / 2) - 100, (m_settings["WindowWidth"].GetInt() / 2) + 100);
+	std::uniform_int_distribution<int> m_rngph((m_settings["WindowHeight"].GetInt() / 2) - 100, (m_settings["WindowHeight"].GetInt() / 2) + 100);
 	// Init SDL with video mode
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
@@ -89,9 +93,21 @@ bool Application::Init()
 		return false;
 	}
 
+	// Create our spatial hash table
+	m_sht = new SpatialHashTable(m_settings["WindowWidth"].GetInt(), m_settings["WindowHeight"].GetInt(), 64);
+
+	// Create our particles from the count given in the settings json
+	m_particles.clear();
+	for (int i = 0; i < m_settings["ParticleCount"].GetInt(); i++)
+	{
+		m_particles.push_back(new Particle(glm::vec2(m_rngpw(m_rng), m_rngph(m_rng)), glm::vec2(m_rngv(m_rng), m_rngv(m_rng)),
+			glm::vec2(0, 0), glm::vec3(255, 255, 255), 500.0f, 2.0f));
+	}
+	//glm::vec3(rand() % 255 + 100, rand() % 255 + 100, rand() % 255 + 100)
+	m_particles[1]->Radius(5.0f);
 	// Get the last time to calculate deltatime for the first runthrough.
 	/* No more code should be under this line in the init function unless its
-	   timing related or enabling the update loop */
+	   timing related or enabling the update loopffg */
 	m_lastTime = SDL_GetTicks();
 	m_running = true;
 	
@@ -135,20 +151,31 @@ bool Application::Update()
 		m_lastTime = m_currentTime;
 		// Update scene
 
+		// Clear our SpatialHashTable
+		m_sht->Clear();
 
+		// Loop through every particle, updating it and adding it to the spatial hash table
+		for (unsigned int i = 0; i < m_particles.size(); i++)
+		{
+			m_particles.at(i)->Update(m_deltaTime);
+			m_sht->AddParticle(m_particles.at(i));
+		}
+		m_localGroup = m_sht->GetLocalObjects(m_particles[1]);
+		unsigned int m_localGroupSize = m_localGroup.size();
+		for (unsigned int i = 0; i < m_localGroupSize; i++)
+		{
+			m_localGroup[i]->Colour(glm::vec3(255, 0, 0));
+		}
+
+		m_particles[1]->Colour(glm::vec3(0, 255, 0));
 		SDL_SetRenderDrawColor(m_renderer, 25, 25, 25, 255);
 		SDL_RenderClear(m_renderer);
 		// Render scene
-
-		// Draw
-		for (int i = 0; i < 1000; i+=10)
+		for (unsigned int i = 0; i < m_particles.size(); i++)
 		{
-			for (int j = 0; j < 1000; j+=10)
-			{
-				SDL_SetRenderDrawColor(m_renderer, rand() % (255 - 0 + 1) + 0 , 0, 0, 255);
-				SDL_RenderDrawPoint(m_renderer, i, j);
-			}
+			m_particles.at(i)->Draw(m_renderer);
 		}
+		
 		SDL_RenderPresent(m_renderer);
 		if (m_settings["MaxFPS"].GetInt() > 0)
 		{

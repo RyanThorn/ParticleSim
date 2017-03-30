@@ -1,21 +1,68 @@
-#include "Stdafx.h"
-#include "LinkedList.h"
+#ifndef _LINKEDLIST_H_
+#define _LINKEDLIST_H_
 /**
- * Defines a linked list of data. Used in conjunction with the hash table data structure to
+ * Defines a linked list of data. Used in conjunction with the hash table data structure to 
  * process hash collisions
- * @file: LinkedList.cpp
+ * @file: LinkedList.h
  * @author: Ryan Thorn
  * @date: 17/03/2017
  * @copyright: Copyright Ryan Thorn (c) 2017. All rights reserved.
  */
+class Particle;
+// Defines a data packet to be stored within the linked list
+template <class T> class LinkedData
+{
+public:
+	std::string m_key;
+	T m_data;
+	LinkedData<T> *m_next;
+};
+
+// Our linked list defined by a root node data
+template <class T> class LinkedList
+{
+private:
+	// The root node (head node) of this list
+	LinkedData<T> *m_root;
+	// The length of this list
+	int m_length;
+
+public:
+	LinkedList();
+	~LinkedList();
+
+	/**
+	 * Inserts the specified data to the back of the list (push back)
+	 * @param LinkedData* _data The data to be inserted to the end of the list
+	 */
+	void Insert(LinkedData<T> * _data);
+
+	/**
+	 * Removes data from the list based on the key provided
+	 * @param string _key The key to identify the data to be removed
+	 * @returns bool True if successful, false if unsuccessful
+	 */
+	bool Remove(std::string _key);
+
+	/**
+	 * Retrieves data from the given key
+	 * @param string _key The key to identify the data to be returned
+	 * @returns LinkedData Returns the data if found. If not it returns a nullptr
+	 */
+	LinkedData<T>* Find(std::string _key);
+
+	// Getters/setters
+	int GetLength() { return m_length; }
+};
 
 /**
- * Constructor will make an empty list structure
- */
-LinkedList::LinkedList()
+* Constructor will make an empty list structure
+*/
+template <class T>
+LinkedList<T>::LinkedList()
 {
 	// An empty root node to begin the linked list
-	m_root = new LinkedData;
+	m_root = new LinkedData<T>;
 	// Set its next item to null
 	m_root->m_next = nullptr;
 	// As the next item is null we have a length of 0 as the root node doesn't count towards its length
@@ -23,13 +70,14 @@ LinkedList::LinkedList()
 }
 
 /**
- * Destructor will destroy the linked list's memory and reset it all to null
- */
-LinkedList::~LinkedList()
+* Destructor will destroy the linked list's memory and reset it all to null
+*/
+template <class T>
+LinkedList<T>::~LinkedList()
 {
 	// Create two temporary storages for the current item and its next item
-	LinkedData *m_current = m_root;
-	LinkedData *m_next = m_root;
+	LinkedData<T> *m_current = m_root;
+	LinkedData<T> *m_next = m_root;
 	// While a next item exists
 	while (m_next)
 	{
@@ -47,10 +95,11 @@ LinkedList::~LinkedList()
 }
 
 /**
- * Inserts the specified data to the back of the list (push back)
- * @param LinkedData* _data The data to be inserted to the end of the list
- */
-void LinkedList::Insert(LinkedData * _data)
+* Inserts the specified data to the back of the list (push back)
+* @param LinkedData* _data The data to be inserted to the end of the list
+*/
+template <class T>
+void LinkedList<T>::Insert(LinkedData<T> * _data)
 {
 	// If the root doesn't have a next
 	if (!m_root->m_next)
@@ -66,8 +115,8 @@ void LinkedList::Insert(LinkedData * _data)
 
 	// Else we need to find the end of the list
 	// Temporary storage for the current node and next node
-	LinkedData *m_current = m_root;
-	LinkedData *m_next = m_root;
+	LinkedData<T> *m_current = m_root;
+	LinkedData<T> *m_next = m_root;
 
 	// Loop through until we have no next node
 	while (m_next)
@@ -87,11 +136,12 @@ void LinkedList::Insert(LinkedData * _data)
 }
 
 /**
- * Removes data from the list based on the key provided
- * @param string _key The key to identify the data to be removed
- * @returns bool True if successful, false if unsuccessful
- */
-bool LinkedList::Remove(std::string _key)
+* Removes data from the list based on the key provided
+* @param string _key The key to identify the data to be removed
+* @returns bool True if successful, false if unsuccessful
+*/
+template <class T>
+bool LinkedList<T>::Remove(std::string _key)
 {
 	// Check if this is an empty list
 	if (!m_root->m_next)
@@ -100,8 +150,8 @@ bool LinkedList::Remove(std::string _key)
 		return false;
 	}
 	// Temporary storage for the current node and next node
-	LinkedData *m_current = m_root;
-	LinkedData *m_next = m_root;
+	LinkedData<T> *m_current = m_root;
+	LinkedData<T> *m_next = m_root;
 
 	// Loop through until we have no next node
 	while (m_next)
@@ -128,15 +178,16 @@ bool LinkedList::Remove(std::string _key)
 }
 
 /**
- * Retrieves data from the given key
- * @param string _key The key to identify the data to be returned
- * @returns LinkedData Returns the data if found. If not it returns a nullptr
- */
-LinkedData * LinkedList::Find(std::string _key)
+* Retrieves data from the given key
+* @param string _key The key to identify the data to be returned
+* @returns LinkedData Returns the data if found. If not it returns a nullptr
+*/
+template <class T>
+LinkedData<T> * LinkedList<T>::Find(std::string _key)
 {
 	// Temporary storage for the current node and next node
-	LinkedData *m_current = m_root;
-	LinkedData *m_next = m_root;
+	LinkedData<T> *m_current = m_root;
+	LinkedData<T> *m_next = m_root;
 
 	// Loop through until we have no next node
 	while (m_next)
@@ -157,3 +208,6 @@ LinkedData * LinkedList::Find(std::string _key)
 	// Didn't find it. Return null
 	return nullptr;
 }
+
+#endif // !_LINKEDLIST_H_
+

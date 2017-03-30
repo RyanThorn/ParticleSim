@@ -25,6 +25,12 @@ private:
 	float m_deltaTime; // The delta between the last frame and current frame times
 	unsigned int m_frames; // A frame counter
 
+	// Game storage
+	std::vector<Particle*> m_particles; // Vector of all particles in the game. Used for iteration through ALL particles
+	SpatialHashTable* m_sht;// Spatial hashtable for collision detection
+
+	std::vector<Particle*> m_localGroup;
+
 	// Json Inputs
 	rapidjson::Document m_settings; // The settings json data from the settings.json file
 
