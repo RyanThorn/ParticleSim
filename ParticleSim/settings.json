@@ -1,5 +1,5 @@
 {
-  "MaxFPS": 200,
+  "MaxFPS": 800,
   "ParticleCount": 2000,
   "ProgramTitle": "Particle Simulator - Ryan Thorn",
   "WindowHeight": 768,

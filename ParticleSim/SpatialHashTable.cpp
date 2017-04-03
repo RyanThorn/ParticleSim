@@ -15,6 +15,7 @@ SpatialHashTable::SpatialHashTable(int _screenWidth, int _screenHeight, int _cel
 
 	// Create our hashtable and run our Clear function to make sure its initialised
 	m_hashTable = new std::vector<Particle*>[m_tableSize];
+	
 	Clear();
 }
 
@@ -30,14 +31,13 @@ void SpatialHashTable::Clear()
 	// Clear the hash table and reset it to a new one
 	for (int i = 0; i < m_tableSize; i++)
 	{
-		// Clear our array of vectors
 		m_hashTable[i].clear();
 	}
 }
 
 /**
  * Adds a particle to the spatial hash table
- * @param Particle* _particle The particle to add to the hash table
+ * @param _particle Particle* The particle to add to the hash table
  */
 void SpatialHashTable::AddParticle(Particle* _particle)
 {
@@ -49,14 +49,16 @@ void SpatialHashTable::AddParticle(Particle* _particle)
 	// Iterate over the list adding the particle to each cell (bucket) that it is part of
 	for (m_iter = m_cellIndices.begin(); m_iter != m_cellIndices.end(); ++m_iter)
 	{
-		m_hashTable[*m_iter].push_back(_particle);
-		//_particle->Colour(glm::vec3());
+		if (*m_iter >= 0 && *m_iter < m_tableSize)
+		{
+			m_hashTable[*m_iter].push_back(_particle);
+		}
 	}
 }
 
 /**
 * Returns a list of cell indices from the provided particle
-* @param Particle* _particle The particle to get the cell indices for
+* @param _particle Particle* The particle to get the cell indices for
 * @returns list<int> A list of cell indices that this particle is in
 */
 std::list<int> SpatialHashTable::GetCellIndices(Particle* _particle)
@@ -94,8 +96,8 @@ std::list<int> SpatialHashTable::GetCellIndices(Particle* _particle)
 /**
  * Generates a hash (or cell position) for a coordinate position
  * Hashes based on (floor(x / cell_size)) + (floor(y / cell_size)) * (screen_width / cell_size)
- * @param glm::vec2 _position The position of the particle on the screen eg:(235, 732)
- * @returns int Returns the hash (cell position) of this screen position
+ * @param _position glm::vec2 The position of the particle on the screen eg:(235, 732)
+ * @returns int Returns the hash (cell position) of this screen position. Also returns -1 if the hash is out of range of the table size
  */
 int SpatialHashTable::Hash(glm::vec2 _position)
 {
@@ -103,13 +105,9 @@ int SpatialHashTable::Hash(glm::vec2 _position)
 	int m_hash = (int)((floor(_position.x / m_cellSize)) + (floor(_position.y / m_cellSize)) * (m_screenWidth / m_cellSize));
 
 	// force any outliers to just be in cell 1 for now (this isnt efficient but need to think of a better way around it)
-	if (m_hash > (m_tableSize - 1))
+	if (m_hash > (m_tableSize - 1) || m_hash < 0)
 	{
-		m_hash = m_tableSize - 1;
-	}
-	else if (m_hash < 0)
-	{
-		m_hash = 0;
+		m_hash = -1;
 	}
 
 	return m_hash;
@@ -117,7 +115,7 @@ int SpatialHashTable::Hash(glm::vec2 _position)
 
 /**
  * Returns a vector of particles which are close to the given particle
- * @param Particle* _particle The particle to use as the search case
+ * @param _particle Particle* The particle to use as the search case
  * @returns vector<Particle*> A vector of particles near the given particle
  */
 std::vector<Particle*> SpatialHashTable::GetLocalObjects(Particle* _particle)
@@ -135,10 +133,33 @@ std::vector<Particle*> SpatialHashTable::GetLocalObjects(Particle* _particle)
 	for (m_iter = m_cellIndices.begin(); m_iter != m_cellIndices.end(); ++m_iter)
 	{
 		// Insert the buckets found onto the end of the return vector
-		m_return.insert(m_return.end(), m_hashTable[*m_iter].begin(),
-			m_hashTable[*m_iter].end());
+		if (*m_iter >= 0 && *m_iter < m_tableSize)
+		{
+			m_return.insert(m_return.end(), m_hashTable[*m_iter].begin(),
+				m_hashTable[*m_iter].end());
+		}
 	}
 
 	// return the vector
 	return m_return;
+}
+
+/**
+* Draws the cell boundaries for debugging purposes
+* @param _renderer SDL_Renderer* The SDL renderer used to draw graphics
+*/
+void SpatialHashTable::DrawCellLines(SDL_Renderer* _renderer)
+{
+	SDL_SetRenderDrawColor(_renderer, 43, 206, 239, 255);
+	// Draw column lines
+	for (int i = 0; i < m_tableColumns; i++)
+	{
+		SDL_RenderDrawLine(_renderer, i * m_cellSize, 0, i * m_cellSize, m_screenHeight);
+	}
+
+	// Draw row lines
+	for (int i = 0; i < m_tableRows; i++)
+	{
+		SDL_RenderDrawLine(_renderer, 0, i * m_cellSize, m_screenWidth, i * m_cellSize);
+	}	
 }
